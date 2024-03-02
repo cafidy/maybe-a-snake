@@ -51,10 +51,10 @@ int main() {
   vector<RectangleShape> testshape;
   RectangleShape shape;
   shape.setPosition(Vector2f(100.0f,100.0f));
-  shape.setSize(Vector2f(100.0f,100.0f));
+  shape.setSize(Vector2f(25.0f,25.0f));
   shape.setColor(Vector3i(128,0,128));
   testshape.push_back(shape);
-
+  int sens =0;
   int cpt=0;
 
   //creation de la sceneClass
@@ -62,9 +62,11 @@ int main() {
   Scene defaultScene;
   RectangleShape mobe;
   mobe.setPosition(Vector2f(genrator(1),genrator(1)));
-  mobe.setSize(Vector2f(100.0f,100.0f));
+  mobe.setSize(Vector2f(25.0f,25.0f));
   mobe.setOrigin(Vector2f(100.0f,100.0f));
   mobe.setColor(Vector3i(147,71,159));
+  int TARGET_FPS = 10;
+  double lastFrameTime = glfwGetTime();
   //FPS counter
   int nbFrames = 0;
   //double frameTarget = 1.0/60.0;
@@ -98,45 +100,69 @@ int main() {
 		// Clean the back buffer and assign the new color to it
 		glClear(GL_COLOR_BUFFER_BIT);
     //testspr.setPosition(testspr.getPositionX()+0.5f, testspr.getPositionY()+0.5f);
-    for (int i = 0; i < cpt; i++)
-    {
-      testshape[i].setPosition(Vector2f(testshape[i-1].getPosition().x,testshape[i-1].getPosition().y));
+    defaultScene.Use();
+    defaultScene.Draw(testshape[0]);
+    for(int i = (int)testshape.size()-1; i >= 1; i--){
+      if (i == 1){
+        testshape[i].setPosition(testshape[0].getPosition());
+      }else {
+        testshape[i].setPosition(testshape[i-1].getPosition());
+      }
+      defaultScene.Draw(testshape[i]);
+      if (testshape[i].getCollisionBox()->check(testshape[i].getCollisionBox())){
+        break;
+      }
     }
+    for (int i = 0; i < (int)testshape.size()-1; i++)
+    {
+      defaultScene.Draw(testshape[i]);
+    }
+    
     if (glfwGetKey(window,GLFW_KEY_RIGHT)==GLFW_PRESS && shapex<1000-10)
     {
-
-      
-      testshape[0].setPosition(Vector2f(shapex=shapex+1,shapey=shapey) );
+      sens=1;
     }
     if (glfwGetKey(window,GLFW_KEY_LEFT)==GLFW_PRESS && shapex>10)
     {
-
-      testshape[0].setPosition(Vector2f(shapex=shapex-1,shapey=shapey));
+      sens=2;
     }
     if (glfwGetKey(window,GLFW_KEY_UP)==GLFW_PRESS  && shapey>10)
     {
-
-      testshape[0].setPosition(Vector2f(shapex=shapex,shapey=shapey-1));
+        sens=3;
     }
     if (glfwGetKey(window,GLFW_KEY_DOWN)==GLFW_PRESS && shapey<1000-10)
     {
-
-      testshape[0].setPosition(Vector2f(shapex=shapex,shapey=shapey+1) );
+      sens=4;
     }
-    if (testshape[0].getCollisionBox()->check(mobe.getCollisionBox()))
-    {
+    if(testshape[0].getCollisionBox()->check(mobe.getCollisionBox())){
+      RectangleShape Rect;
+      Rect.setSize(Vector2f(25.0f,25.0f));
+      Rect.setColor(Vector3i(128,0,128));
+      testshape.push_back(Rect);
       mobe.setPosition(Vector2f(genrator(1),genrator(1)));
-      cpt++;
-      shape.setPosition(Vector2f(testshape[cpt-1].getPosition().x,testshape[cpt-1].getPosition().y));
-      testshape.push_back(shape);
     }
-    
-    
-    defaultScene.Use();
-    for (int i = 0; i < cpt; i++)
+    if (sens==1)
     {
-      defaultScene.Draw(testshape[0]);
+      testshape[0].setPosition(Vector2f(testshape[0].getPosition().x+50.0f,testshape[0].getPosition().y));
     }
+    if (sens==2)
+    {
+      testshape[0].setPosition(Vector2f(testshape[0].getPosition().x-50.0f,testshape[0].getPosition().y));
+    }
+    if (sens==3)
+    {
+      testshape[0].setPosition(Vector2f(testshape[0].getPosition().x,testshape[0].getPosition().y-50.0f));
+    }
+    if (sens==4)
+    {
+      testshape[0].setPosition(Vector2f(testshape[0].getPosition().x,testshape[0].getPosition().y+50.0f));
+    }
+    
+    
+    
+  
+    
+    
     defaultScene.Draw(mobe);
     //Check d'erreur
     GLenum error = glGetError();
@@ -147,6 +173,18 @@ int main() {
 		glfwSwapBuffers(window);
 		// Take care of all GLFW events
 		glfwPollEvents();
+    double currentFrameTime = glfwGetTime();
+    double deltaTime = currentFrameTime - lastFrameTime;
+
+    // Attendre si nécessaire pour atteindre le taux de rafraîchissement cible
+    while (deltaTime < 1.0 / TARGET_FPS) {
+      glfwWaitEventsTimeout((1.0 / TARGET_FPS - deltaTime) * 0.9); // Attente avec un petit marge
+      currentFrameTime = glfwGetTime();
+      deltaTime = currentFrameTime - lastFrameTime;
+    }
+    lastFrameTime = currentFrameTime;
+
+
     
 	}
 	// Delete window before ending the program
